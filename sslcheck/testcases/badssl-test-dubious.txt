@@ -1,0 +1,10 @@
+incomplete-chain.badssl.com
+sha1-2016.badssl.com
+rsa8192.badssl.com
+mixed.badssl.com
+mixed-favicon.badssl.com
+cbc.badssl.com
+mozilla-intermediate.badssl.com
+dh1024.badssl.com
+static-rsa.badssl.com
+spoofed-favicon.badssl.com
