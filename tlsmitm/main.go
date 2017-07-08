@@ -1,14 +1,17 @@
 package main
 
 import (
+	"flag"
 	"os"
 	"os/signal"
 )
 
 var rules []listener
 
-func main() {
+var nolog = flag.Bool("silent", false, "do not log the traffic")
 
+func main() {
+	flag.Parse()
 	//TODO parse CLI parameters and create rules
 
 	//TODO allow TLS -> Plain and Plain -> TLS

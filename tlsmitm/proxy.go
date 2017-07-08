@@ -64,19 +64,24 @@ func (l *listener) Listen() {
 			log.Printf("Got incoming connection from ip %s on port %s", conn.RemoteAddr().String(), l.localport)
 			defer func() { _ = lc.Close() }()
 			//Dump client traffic to stdout
-			lt := io.TeeReader(lc, os.Stdout)
-
-			//Dump client traffic to file
-			outclientfile, filerr := os.OpenFile(
-				fmt.Sprintf("%s_client.log", filename),
-				os.O_APPEND|os.O_CREATE|os.O_WRONLY,
-				0666)
-			if filerr != nil {
-				log.Printf("Could not open logfile: %s\n, proceeding without it", filerr.Error())
+			var lt io.Reader
+			if *nolog {
+				lt = lc
 			} else {
-				lt = io.TeeReader(lt, outclientfile)
+				lt = io.TeeReader(lc, os.Stdout)
+
+				//Dump client traffic to file
+				outclientfile, filerr := os.OpenFile(
+					fmt.Sprintf("%s_client.log", filename),
+					os.O_APPEND|os.O_CREATE|os.O_WRONLY,
+					0666)
+				if filerr != nil {
+					log.Printf("Could not open logfile: %s\n, proceeding without it", filerr.Error())
+				} else {
+					lt = io.TeeReader(lt, outclientfile)
+				}
+				_, _ = outclientfile.Write([]byte("Remote: " + conn.RemoteAddr().String() + " " + l.String() + "\n"))
 			}
-			_, _ = outclientfile.Write([]byte("Remote: " + conn.RemoteAddr().String() + " " + l.String() + "\n"))
 
 			var rc net.Conn
 			log.Printf("Contacting remote server @%s", l.remoteip+l.remoteport)
@@ -98,18 +103,22 @@ func (l *listener) Listen() {
 			log.Println("Connected to remote server")
 
 			defer func() { _ = rc.Close() }()
-			//Dump server traffic to stdout
-			rt := io.TeeReader(rc, os.Stdout)
-
-			//Dump server traffic to file
-			outserverfile, filerr := os.OpenFile(
-				fmt.Sprintf("%s_server.log", filename),
-				os.O_APPEND|os.O_CREATE|os.O_WRONLY,
-				0666)
-			if filerr != nil {
-				log.Printf("Could not open logfile: %s\n, proceeding without it", filerr.Error())
+			var rt io.Reader
+			if *nolog {
+				rt = rc
 			} else {
-				rt = io.TeeReader(rt, outserverfile)
+				//Dump server traffic to stdout
+				rt := io.TeeReader(rc, os.Stdout)
+				//Dump server traffic to file
+				outserverfile, filerr := os.OpenFile(
+					fmt.Sprintf("%s_server.log", filename),
+					os.O_APPEND|os.O_CREATE|os.O_WRONLY,
+					0666)
+				if filerr != nil {
+					log.Printf("Could not open logfile: %s\n, proceeding without it", filerr.Error())
+				} else {
+					rt = io.TeeReader(rt, outserverfile)
+				}
 			}
 
 			go func() {
