@@ -10,11 +10,12 @@ var rules []listener
 
 var nolog = flag.Bool("silent", false, "do not log the traffic")
 
+//TODO print example
+var conf = flag.String("conf", "", "a conf file")
+
 func main() {
 	flag.Parse()
 	//TODO parse CLI parameters and create rules
-
-	//TODO allow TLS -> Plain and Plain -> TLS
 
 	for _, l := range rules {
 		l := l

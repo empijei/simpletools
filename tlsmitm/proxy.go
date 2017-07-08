@@ -14,30 +14,34 @@ const encr = "encrypted"
 const unen = "unencrypted"
 
 type listener struct {
-	localport, remoteport, remoteip string
-	secure                          bool
+	Localport, Remoteport, Remoteip string
+	Secure                          bool
 	certconf                        *tls.Config
-	protoSwitch                     bool
+	ProtoSwitch                     bool
+
+	// Used only during deserialization
+	KeyName, CrtName string
+	Verify           bool
 }
 
 func (l *listener) String() string {
 	var localtext, remotetext string
-	if l.secure {
+	if l.Secure {
 		localtext = encr
-		if l.protoSwitch {
+		if l.ProtoSwitch {
 			remotetext = unen
 		} else {
 			remotetext = encr
 		}
 	} else {
 		localtext = unen
-		if l.protoSwitch {
+		if l.ProtoSwitch {
 			remotetext = encr
 		} else {
 			remotetext = unen
 		}
 	}
-	return localtext + " " + l.localport + " -> " + l.remoteip + l.remoteport + " " + remotetext
+	return localtext + " " + l.Localport + " -> " + l.Remoteip + l.Remoteport + " " + remotetext
 }
 
 func (l *listener) Listen() {
@@ -45,10 +49,10 @@ func (l *listener) Listen() {
 
 	var ll net.Listener
 	var err error
-	if l.secure {
-		ll, err = tls.Listen("tcp", l.localport, l.certconf)
+	if l.Secure {
+		ll, err = tls.Listen("tcp", l.Localport, l.certconf)
 	} else {
-		ll, err = net.Listen("tcp", l.localport)
+		ll, err = net.Listen("tcp", l.Localport)
 	}
 	if err != nil {
 		log.Fatal(err)
@@ -61,7 +65,7 @@ func (l *listener) Listen() {
 		}
 		go func(lc net.Conn) {
 			filename := fmt.Sprintf("%d", time.Now().UnixNano())
-			log.Printf("Got incoming connection from ip %s on port %s", conn.RemoteAddr().String(), l.localport)
+			log.Printf("Got incoming connection from ip %s on port %s", conn.RemoteAddr().String(), l.Localport)
 			defer func() { _ = lc.Close() }()
 			//Dump client traffic to stdout
 			var lt io.Reader
@@ -84,16 +88,16 @@ func (l *listener) Listen() {
 			}
 
 			var rc net.Conn
-			log.Printf("Contacting remote server @%s", l.remoteip+l.remoteport)
+			log.Printf("Contacting remote server @%s", l.Remoteip+l.Remoteport)
 			//This means (l.secure && !l.protoSwitch) || (!l.secure && l.protoSwitch)
-			if l.secure != l.protoSwitch {
-				rc, err = tls.Dial("tcp", l.remoteip+l.remoteport,
+			if l.Secure != l.ProtoSwitch {
+				rc, err = tls.Dial("tcp", l.Remoteip+l.Remoteport,
 					&tls.Config{
 						//TODO make this configurable
 						InsecureSkipVerify: true,
 					})
 			} else {
-				rc, err = net.Dial("tcp", l.remoteip+l.remoteport)
+				rc, err = net.Dial("tcp", l.Remoteip+l.Remoteport)
 			}
 			if err != nil {
 				//TODO handle this
