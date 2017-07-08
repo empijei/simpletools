@@ -15,13 +15,22 @@ const unen = "unencrypted"
 
 type listener struct {
 	Localport, Remoteport, Remoteip string
-	Secure                          bool
-	certconf                        *tls.Config
-	ProtoSwitch                     bool
+	//Tells the listener to setup a tls socket
+	Secure bool `"json:,omitempty"`
+	//Makes the tool change protocol, this can be used to downgrade a secure
+	//connection or to upgrade an insecure one
+	ProtoSwitch bool `"json:,omitempty"`
 
-	// Used only during deserialization
-	KeyName, CrtName string
-	Verify           bool
+	// Used only during deserialization, name of private key of listener
+	KeyName string `"json:,omitempty"`
+	// Used only during deserialization, name of public key of listener
+	CrtName string `"json:,omitempty"`
+
+	//If false does not validate certificates upon connection to remote hosts
+	Verify bool `"json:,omitempty"`
+
+	// Unexported field, will be created on load
+	certconf *tls.Config
 }
 
 func (l *listener) String() string {

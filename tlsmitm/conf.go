@@ -7,7 +7,7 @@ import (
 	"log"
 )
 
-func init() {
+/*
 	//This is the creation of 2 sample rules
 	rules = append(rules, listener{
 		Localport:   ":9443",
@@ -16,7 +16,8 @@ func init() {
 		Secure:      false,
 		ProtoSwitch: false,
 	})
-	//This is the creation of a sample rule
+
+	//This is the creation of a sample cer pool
 	cer, err := tls.LoadX509KeyPair("server.crt", "server.key")
 	if err != nil {
 		log.Println(err)
@@ -34,13 +35,12 @@ func init() {
 			InsecureSkipVerify: true,
 		},
 	})
-}
+*/
 
-func loadConf(r io.Reader) {
+func loadConf(r io.Reader) (err error) {
 	dec := json.NewDecoder(r)
 	var l listener
-	var err error
-	for ; err != nil; err = dec.Decode(l) {
+	for err = dec.Decode(&l); err == nil; err = dec.Decode(&l) {
 		if l.Secure {
 			cer, cerr := tls.LoadX509KeyPair(l.CrtName, l.KeyName)
 			if cerr != nil {
@@ -52,10 +52,15 @@ func loadConf(r io.Reader) {
 			}
 			l.certconf = certconf
 		}
+		if l.certconf == nil {
+			l.certconf = &tls.Config{}
+		}
 		l.certconf.InsecureSkipVerify = l.Secure
 		rules = append(rules, l)
+		log.Println("Loaded rule: " + l.String())
 	}
-	if err != nil && io.EOF != err {
-		panic(err)
+	if err == io.EOF {
+		err = nil
 	}
+	return
 }
