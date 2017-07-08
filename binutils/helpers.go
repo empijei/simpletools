@@ -32,12 +32,15 @@ func (u *Urlencoder) Write(p []byte) (n int, err error) {
 	for _, b := range p {
 		var ti int
 		var towrite []byte
-		if !((b >= byte('0') && b <= byte('9')) ||
+		if (b >= byte('0') && b <= byte('9')) ||
 			(b >= byte('a') && b <= byte('z')) ||
-			(b >= byte('A') && b <= byte('Z'))) {
-			towrite = []byte(fmt.Sprintf("%%%02x", b))
-		} else {
+			(b >= byte('A') && b <= byte('Z')) {
 			towrite = []byte{b}
+		} else {
+			if b == byte(0) {
+				fmt.Fprintln(os.Stderr, "0x00 null byte in gadget")
+			}
+			towrite = []byte(fmt.Sprintf("%%%02x", b))
 		}
 		ti, err = u.wrapped.Write(towrite)
 		n += ti
