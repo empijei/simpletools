@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"regexp"
 	"strings"
 )
 
@@ -34,30 +35,58 @@ func _panic(err error) {
 	}
 }
 
-const BEGIN = "[Http"
-const END = "public"
+var annotation = regexp.MustCompile("^\\s*\\[[A-Z].*\\]\\s*$")
 
 func scanfile(path string) {
 	file, err := os.Open(path)
 	_panic(err)
-	var isOutput, fileprinted bool
+	blacklistcheck := func(line string) bool {
+		//TODO make this configurable
+		blacklist := []string{"Obsolete", "assembly", "TestMethod"}
+		for _, word := range blacklist {
+			if strings.Contains(line, word) {
+				return true
+			}
+		}
+		return false
+	}
+	whitelistcheck := func(line string) bool {
+		whitelist := []string{"Route"}
+		if len(whitelist) == 0 {
+			return true
+		}
+		for _, word := range whitelist {
+			if strings.Contains(line, word) {
+				return true
+			}
+		}
+		return false
+	}
 	scanner := bufio.NewScanner(file)
+	var isOutput, fileprinted, printed bool
 	for scanner.Scan() {
 		line := scanner.Text()
-		trimmedline := strings.Trim(line, " \t")
-		if strings.HasPrefix(trimmedline, BEGIN) {
-			if !fileprinted {
-				fmt.Println("File: " + path)
-				fileprinted = true
-			}
+		if annotation.MatchString(line) && !blacklistcheck(line) {
 			isOutput = true
 		}
 		if isOutput {
-			fmt.Println(line) // Println will add back the final '\n'
-		}
-		if strings.HasPrefix(trimmedline, END) && isOutput {
-			isOutput = false
-			fmt.Println()
+			if !annotation.MatchString(line) {
+				isOutput = false
+				if printed {
+					fmt.Println(line)
+					fmt.Println()
+				}
+				printed = false
+				continue
+			}
+			if whitelistcheck(line) {
+				if !fileprinted {
+					fmt.Println("File: " + path)
+					fileprinted = true
+				}
+				printed = true
+				fmt.Println(line)
+			}
 		}
 	}
 	_panic(scanner.Err())
