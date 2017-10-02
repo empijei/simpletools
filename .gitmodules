@@ -1,0 +1,20 @@
+[submodule "myip"]
+	path = myip
+	url = https://github.com/empijei/myip.git
+	branch = master
+[submodule "sslcheck"]
+	path = sslcheck
+	url = https://github.com/empijei/sslcheck.git
+	branch = master
+[submodule "serve"]
+	path = serve
+	url = https://github.com/empijei/serve.git
+	branch = master
+[submodule "tlsmitm"]
+	path = tlsmitm
+	url = https://github.com/empijei/tlsmitm.git
+	branch = master
+[submodule "inflate"]
+	path = inflate
+	url = https://github.com/empijei/inflate.git
+	branch = master
