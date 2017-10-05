@@ -18,3 +18,7 @@
 	path = inflate
 	url = https://github.com/empijei/inflate.git
 	branch = master
+[submodule "IPExpander"]
+	path = IPExpander
+	url = https://github.com/empijei/IPExpander.git
+	branch = master
