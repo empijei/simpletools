@@ -19,14 +19,15 @@ var command = flag.String("cmd", "echo", "The command to execute")
 func main() {
 	flag.Parse()
 	var (
-		wg sync.WaitGroup
-		ch = make(chan string, *jobs)
-		p  = isPipe()
+		wg    sync.WaitGroup
+		p     = isPipe()
+		inch  = make(chan string, *jobs)
+		outch = make(chan []byte, *jobs)
 	)
 	wg.Add(*jobs)
 	for i := 0; i < *jobs; i++ {
 		go func() {
-			for tok := range ch {
+			for tok := range inch {
 				strcmd := *command
 				if p {
 					strcmd = strings.Replace(strcmd, "{}", tok, -1)
@@ -37,7 +38,7 @@ func main() {
 					log.Println(err)
 					os.Exit(1)
 				}
-				fmt.Println(string(out))
+				outch <- out
 			}
 			wg.Done()
 		}()
@@ -46,16 +47,26 @@ func main() {
 		if p {
 			scan := bufio.NewScanner(os.Stdin)
 			for scan.Scan() {
-				ch <- scan.Text()
+				inch <- scan.Text()
 			}
 		} else {
 			for i := 0; i < *counter; i++ {
-				ch <- ""
+				inch <- ""
 			}
 		}
-		close(ch)
+		close(inch)
+	}()
+
+	finished := make(chan struct{})
+	go func() {
+		for out := range outch {
+			fmt.Println(string(out))
+		}
+		close(finished)
 	}()
 	wg.Wait()
+	close(outch)
+	<-finished
 }
 
 func isPipe() bool {
