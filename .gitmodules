@@ -22,3 +22,7 @@
 	path = IPExpander
 	url = https://github.com/empijei/IPExpander.git
 	branch = master
+[submodule "keeprunning"]
+	path = keeprunning
+	url = https://github.com/empijei/keeprunning.git
+	branch = master
